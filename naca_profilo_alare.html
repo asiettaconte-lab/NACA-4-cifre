@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NACA 4-Digit — Profili Alari</title>
+<style>
+  :root {
+    --bg:        #0a0c0f;
+    --surface:   #111418;
+    --panel:     #161b22;
+    --border:    #21272f;
+    --accent:    #4fc3f7;
+    --accent2:   #ff6b35;
+    --text:      #e8edf2;
+    --muted:     #6b7885;
+    --sup-line:  #4fc3f7;
+    --inf-line:  #ff6b35;
+    --camber:    #a8ff78;
+    --chord:     #2d3748;
+    --grid:      #161b22;
+    --mono:      'Courier New', 'Lucida Console', Consolas, monospace;
+    --serif:     Georgia, 'Times New Roman', serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    background: var(--surface);
+  }
+  header h1 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  header h1 span { color: var(--accent); font-style: normal; }
+  .header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .naca-label {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(79,195,247,0.3);
+    transition: all 0.15s ease;
+  }
+
+  /* ── LAYOUT PRINCIPALE ── */
+  main {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* ── PANNELLO CONTROLLI ── */
+  .controls {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    overflow-y: auto;
+  }
+
+  .ctrl-group { display: flex; flex-direction: column; gap: 14px; }
+
+  .ctrl-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ctrl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .ctrl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .ctrl-name {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .ctrl-symbol {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .ctrl-value {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .ctrl-value.pct::after { content: '%'; font-size: 12px; color: var(--muted); margin-left: 1px; }
+
+  .ctrl-desc {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  input[type=range]:hover { background: #2a3340; }
+  input[type=range].acc  { accent-color: var(--accent); }
+  input[type=range].acc2 { accent-color: var(--accent2); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    transition: transform 0.1s;
+  }
+  input[type=range].acc::-webkit-slider-thumb  { background: var(--accent); box-shadow: 0 0 8px rgba(79,195,247,0.4); }
+  input[type=range].acc2::-webkit-slider-thumb { background: var(--accent2); box-shadow: 0 0 8px rgba(255,107,53,0.4); }
+  input[type=range]::-webkit-slider-thumb:active { transform: scale(1.25); }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  input[type=range].acc::-moz-range-thumb  { background: var(--accent); }
+  input[type=range].acc2::-moz-range-thumb { background: var(--accent2); }
+
+  /* toggle checkbox */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .toggle-label { font-size: 11px; color: var(--muted); }
+  .toggle-dot { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-acc  { background: var(--accent); }
+  .dot-acc2 { background: var(--accent2); }
+  .dot-cam  { background: var(--camber); }
+
+  .switch {
+    position: relative; display: inline-block;
+    width: 34px; height: 18px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-sw {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slider-sw::before {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    left: 3px; top: 3px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .switch input:checked + .slider-sw { background: #1e3a4a; }
+  .switch input:checked + .slider-sw::before {
+    transform: translateX(16px);
+    background: var(--accent);
+  }
+
+  /* divider */
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  /* export btn */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,195,247,0.05); }
+  .btn-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79,195,247,0.07);
+  }
+  .btn-primary:hover { background: rgba(79,195,247,0.15); }
+
+  /* ── AREA DESTRA: canvas + tabella ── */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── SVG CANVAS ── */
+  .canvas-wrap {
+    flex: 0 0 auto;
+    padding: 28px 32px 16px;
+    background: var(--bg);
+    position: relative;
+  }
+
+  .canvas-wrap svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 340px;
+  }
+
+  .canvas-info {
+    position: absolute;
+    top: 32px; right: 40px;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 2;
+    text-align: right;
+  }
+  .canvas-info span { color: var(--text); }
+
+  /* ── TABELLA ── */
+  .table-section {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .table-header {
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+  }
+
+  .table-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    padding: 8px 12px 8px 32px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    background: var(--surface);
+    position: sticky;
+    top: 41px;
+    z-index: 9;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th:not(:first-child) { text-align: right; padding-right: 32px; }
+
+  tbody tr { border-bottom: 1px solid #0d1117; transition: background 0.1s; }
+  tbody tr:hover { background: rgba(79,195,247,0.04); }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+  tbody tr:nth-child(even):hover { background: rgba(79,195,247,0.04); }
+
+  td { padding: 7px 12px 7px 32px; font-family: var(--mono); }
+  td:not(:first-child) { text-align: right; padding-right: 32px; }
+  td.x-col   { color: var(--muted); }
+  td.sup-col { color: var(--accent); }
+  td.inf-col { color: var(--accent2); }
+  td.cam-col { color: var(--camber); font-size: 11px; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 10px 32px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  footer code {
+    color: var(--text);
+    background: var(--panel);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <h1>Profilo Alare <span>NACA</span> 4 Cifre</h1>
+    <div class="header-sub">
+      Serie simmetrica e con camber · Equazioni Abbott &amp; von Doenhoff (1959)<br>
+      Corda normalizzata c = 1 · 100 punti per superficie
+    </div>
+  </div>
+  <div class="naca-label" id="naca-display">NACA 2412</div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- PANNELLO CONTROLLI -->
+  <aside class="controls">
+
+    <div class="ctrl-group">
+      <div class="ctrl-group-title">Geometria profilo</div>
+
+      <!-- m -->
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <div>
+            <span class="ctrl-symbol">m</span>
+            <span class="ctrl-name"> — freccia massima</span>
+          </div>
+          <span class="ctrl-value pct" id="val-m">2</span>
+        </div>
+        <input type="range" id="sl-m" class="acc" min="0" max="9" step="1" value="2">
+        <div class="ctrl-desc">Ordinata massima della linea media espressa in % della corda.<br>m = 0 → profilo simmetrico (es. NACA 0012).</div>
+      </div>
+
+      <!-- p -->
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <div>
+            <span class="ctrl-symbol">p</span>
+            <span class="ctrl-name"> — posizione freccia</span>
+          </div>
+          <span class="ctrl-value pct" id="val-p" style="color:var(--accent2)">4</span>
+        </div>
+        <input type="range" id="sl-p" class="acc2" min="1" max="9" step="1" value="4">
+        <div class="ctrl-desc">Posizione (×10%) della freccia massima lungo la corda.<br>p = 4 → freccia al 40% della corda.</div>
+      </div>
+
+      <!-- t -->
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <div>
+            <span class="ctrl-symbol">t</span>
+            <span class="ctrl-name"> — spessore massimo</span>
+          </div>
+          <span class="ctrl-value pct" id="val-t" style="color:var(--camber)">12</span>
+        </div>
+        <input type="range" id="sl-t" class="acc" min="1" max="40" step="1" value="12"
+               style="accent-color: var(--camber)">
+        <div class="ctrl-desc">Spessore massimo in % della corda.<br>Il codice NACA si legge come: <em>m p tt</em>.</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="ctrl-group">
+      <div class="ctrl-group-title">Visualizzazione</div>
+      <div class="toggle-row">
+        <div class="toggle-dot"><div class="dot dot-acc"></div><span class="toggle-label">Superficie superiore</span></div>
+        <label class="switch"><input type="checkbox" id="chk-sup" checked><span class="slider-sw"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-dot"><div class="dot dot-acc2"></div><span class="toggle-label">Superficie inferiore</span></div>
+        <label class="switch"><input type="checkbox" id="chk-inf" checked><span class="slider-sw"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-dot"><div class="dot dot-cam"></div><span class="toggle-label">Linea media (camber)</span></div>
+        <label class="switch"><input type="checkbox" id="chk-cam"><span class="slider-sw"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="dot" style="width:8px;height:1px;background:var(--chord);margin:0 0 0 0"></div>
+        <span class="toggle-label" style="flex:1;margin-left:6px">Corda e griglia</span>
+        <label class="switch"><input type="checkbox" id="chk-grid" checked><span class="slider-sw"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Riempimento profilo</span>
+        <label class="switch"><input type="checkbox" id="chk-fill" checked><span class="slider-sw"></span></label>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="ctrl-group">
+      <div class="ctrl-group-title">Esporta</div>
+      <button class="btn btn-primary" id="btn-svg">↓ Scarica SVG</button>
+      <button class="btn" id="btn-csv">↓ Esporta CSV (100 pt)</button>
+      <button class="btn" id="btn-copy">⧉ Copia tabella</button>
+    </div>
+
+  </aside>
+
+  <!-- AREA DESTRA -->
+  <div class="right-panel">
+
+    <!-- SVG canvas -->
+    <div class="canvas-wrap">
+      <svg id="airfoil-svg" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg"
+           preserveAspectRatio="xMidYMid meet">
+        <g id="svg-grid"></g>
+        <g id="svg-fill"></g>
+        <g id="svg-camber"></g>
+        <g id="svg-inf"></g>
+        <g id="svg-sup"></g>
+        <g id="svg-labels"></g>
+      </svg>
+      <div class="canvas-info" id="canvas-info"></div>
+    </div>
+
+    <!-- Tabella -->
+    <div class="table-section">
+      <div class="table-header">
+        <span class="table-title">Coordinate — 21 punti equidistanti</span>
+        <span style="font-size:10px;color:var(--muted)">x/c · y/c normalizzati</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>i</th>
+            <th>x / c</th>
+            <th style="color:var(--accent)">y_sup / c</th>
+            <th style="color:var(--accent2)">y_inf / c</th>
+            <th style="color:var(--camber)">y_cam / c</th>
+            <th>y_t / c</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <span>Eq. spessore:
+    <code>y_t = (t/0.20)·[0.2969√x − 0.1260x − 0.3516x² + 0.2843x³ − 0.1015x⁴]</code>
+  </span>
+  <span>Eq. camber (x &lt; p):
+    <code>y_c = (m/p²)·[2px − x²]</code>
+  </span>
+  <span>Eq. camber (x ≥ p):
+    <code>y_c = m/(1−p)²·[1 − 2p + 2px − x²]</code>
+  </span>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  NACA 4-DIGIT  —  Motore matematico
+// ═══════════════════════════════════════════════════════════
+
+const N_DRAW  = 200;   // punti per il disegno SVG (per semisuperficie)
+const N_TABLE = 21;    // punti per la tabella
+
+// Spessore NACA (equazione canonica Abbott & von Doenhoff)
+function naca_yt(x, t) {
+  const tc = t / 100.0;
+  return (tc / 0.20) * (
+     0.2969 * Math.sqrt(x)
+   - 0.1260 * x
+   - 0.3516 * x * x
+   + 0.2843 * x * x * x
+   - 0.1015 * x * x * x * x
+  );
+}
+
+// Linea media (camber line)
+function naca_yc(x, m, p) {
+  if (m === 0 || p === 0) return 0;
+  const mc = m / 100.0;
+  const pc = p / 10.0;
+  if (x <= pc) {
+    return (mc / (pc * pc)) * (2 * pc * x - x * x);
+  } else {
+    return (mc / ((1 - pc) * (1 - pc))) * (1 - 2 * pc + 2 * pc * x - x * x);
+  }
+}
+
+// Pendenza della linea media  dyc/dx
+function naca_dyc(x, m, p) {
+  if (m === 0 || p === 0) return 0;
+  const mc = m / 100.0;
+  const pc = p / 10.0;
+  if (x < pc) {
+    return (2 * mc / (pc * pc)) * (pc - x);
+  } else {
+    return (2 * mc / ((1 - pc) * (1 - pc))) * (pc - x);
+  }
+}
+
+// Coordinate complete superficie superiore/inferiore
+function naca_surfaces(x, m, p, t) {
+  const yt  = naca_yt(x, t);
+  const yc  = naca_yc(x, m, p);
+  const dyc = naca_dyc(x, m, p);
+  const theta = Math.atan(dyc);
+  return {
+    x_u:  x  - yt * Math.sin(theta),
+    y_u:  yc + yt * Math.cos(theta),
+    x_l:  x  + yt * Math.sin(theta),
+    y_l:  yc - yt * Math.cos(theta),
+    yc, yt
+  };
+}
+
+// Distribuzione x con clustering al bordo d'attacco (cosine spacing)
+function cosine_x(n) {
+  return Array.from({length: n}, (_, i) => {
+    const beta = Math.PI * i / (n - 1);
+    return (1 - Math.cos(beta)) / 2;
+  });
+}
+
+function linspace(a, b, n) {
+  return Array.from({length: n}, (_, i) => a + (b - a) * i / (n - 1));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STATO APPLICAZIONE
+// ═══════════════════════════════════════════════════════════
+
+const state = {
+  m: 2, p: 4, t: 12,
+  showSup: true, showInf: true, showCam: false,
+  showGrid: true, showFill: true
+};
+
+// ═══════════════════════════════════════════════════════════
+//  RENDERING SVG
+// ═══════════════════════════════════════════════════════════
+
+const W = 800, H = 300;
+const PAD_L = 60, PAD_R = 60, PAD_T = 60, PAD_B = 60;
+const CW = W - PAD_L - PAD_R;   // larghezza utile canvas
+const CH = H - PAD_T - PAD_B;   // altezza utile canvas
+
+function toSVG(xn, yn) {
+  // xn in [0,1], yn simmetrico attorno a 0 — centro verticale canvas
+  return {
+    sx: PAD_L + xn * CW,
+    sy: H / 2 - yn * CW   // scala uguale in x e y (no distorsione)
+  };
+}
+
+function pts2path(pts) {
+  if (!pts.length) return '';
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.sx.toFixed(2)},${p.sy.toFixed(2)}`).join(' ');
+}
+
+function makeSVGEl(tag, attrs, parent) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (parent) parent.appendChild(el);
+  return el;
+}
+
+function clearEl(id) {
+  const el = document.getElementById(id);
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function render() {
+  const {m, p, t} = state;
+  const xs = cosine_x(N_DRAW);
+
+  // Calcola punti
+  const pts = xs.map(x => naca_surfaces(x, m, p, t));
+
+  const sup_pts = pts.map(pt => toSVG(pt.x_u, pt.y_u));
+  const inf_pts = pts.map(pt => toSVG(pt.x_l, pt.y_l));
+  const cam_pts = xs.map(x => { const {sx,sy} = toSVG(x, naca_yc(x, m, p)); return {sx, sy}; });
+
+  // ── GRIGLIA ──
+  clearEl('svg-grid');
+  const gridG = document.getElementById('svg-grid');
+  if (state.showGrid) {
+    // sfondo
+    makeSVGEl('rect', {
+      x: PAD_L, y: PAD_T, width: CW, height: CH,
+      fill: 'none', stroke: '#1a2030', 'stroke-width': '0.5'
+    }, gridG);
+    // linee verticali x = 0, 0.1, ..., 1
+    for (let i = 0; i <= 10; i++) {
+      const x = i / 10;
+      const {sx} = toSVG(x, 0);
+      makeSVGEl('line', {
+        x1: sx, y1: PAD_T, x2: sx, y2: H - PAD_B,
+        stroke: i === 0 || i === 10 ? '#2d3748' : '#161b22',
+        'stroke-width': i === 0 || i === 10 ? '1' : '0.5',
+        'stroke-dasharray': i === 0 || i === 10 ? '' : '4 4'
+      }, gridG);
+      // etichetta x
+      if (i > 0 && i < 10) {
+        makeSVGEl('text', {
+          x: sx, y: H - PAD_B + 16,
+          'text-anchor': 'middle', fill: '#3d4f60',
+          'font-size': '10', 'font-family': 'Space Mono, monospace'
+        }, gridG).textContent = `0.${i}`;
+      }
+    }
+    // corda
+    const {sx: x0} = toSVG(0, 0), {sx: x1} = toSVG(1, 0);
+    makeSVGEl('line', {
+      x1: x0, y1: H/2, x2: x1, y2: H/2,
+      stroke: '#2d3748', 'stroke-width': '1', 'stroke-dasharray': '6 3'
+    }, gridG);
+    // etichette asse
+    makeSVGEl('text', {
+      x: PAD_L - 10, y: H/2 + 4,
+      'text-anchor': 'end', fill: '#3d4f60',
+      'font-size': '10', 'font-family': 'Space Mono, monospace'
+    }, gridG).textContent = '0';
+    makeSVGEl('text', {
+      x: PAD_L + CW + 10, y: H/2 + 4,
+      'text-anchor': 'start', fill: '#3d4f60',
+      'font-size': '10', 'font-family': 'Space Mono, monospace'
+    }, gridG).textContent = '1.0';
+    // linea y=0 etichetta
+    makeSVGEl('text', {
+      x: PAD_L - 10, y: PAD_T,
+      'text-anchor': 'end', fill: '#3d4f60',
+      'font-size': '10', 'font-family': 'Space Mono, monospace'
+    }, gridG).textContent = 'y/c';
+    makeSVGEl('text', {
+      x: W/2, y: H - 8,
+      'text-anchor': 'middle', fill: '#3d4f60',
+      'font-size': '10', 'font-family': 'Space Mono, monospace'
+    }, gridG).textContent = 'x/c';
+  }
+
+  // ── FILL ──
+  clearEl('svg-fill');
+  if (state.showFill) {
+    const fillG = document.getElementById('svg-fill');
+    const revInf = [...inf_pts].reverse();
+    const d = pts2path(sup_pts) + ' ' + pts2path(revInf) + ' Z';
+    makeSVGEl('path', {
+      d, fill: 'rgba(79,195,247,0.06)', stroke: 'none'
+    }, fillG);
+  }
+
+  // ── SUPERFICIE INFERIORE ──
+  clearEl('svg-inf');
+  if (state.showInf) {
+    const g = document.getElementById('svg-inf');
+    makeSVGEl('path', {
+      d: pts2path(inf_pts),
+      fill: 'none', stroke: '#ff6b35',
+      'stroke-width': '1.8', 'stroke-linejoin': 'round'
+    }, g);
+  }
+
+  // ── SUPERFICIE SUPERIORE ──
+  clearEl('svg-sup');
+  if (state.showSup) {
+    const g = document.getElementById('svg-sup');
+    makeSVGEl('path', {
+      d: pts2path(sup_pts),
+      fill: 'none', stroke: '#4fc3f7',
+      'stroke-width': '2', 'stroke-linejoin': 'round'
+    }, g);
+  }
+
+  // ── LINEA MEDIA ──
+  clearEl('svg-camber');
+  if (state.showCam && m > 0) {
+    const g = document.getElementById('svg-camber');
+    makeSVGEl('path', {
+      d: pts2path(cam_pts),
+      fill: 'none', stroke: '#a8ff78',
+      'stroke-width': '1.2', 'stroke-dasharray': '5 3',
+      'stroke-linejoin': 'round'
+    }, g);
+  }
+
+  // ── LABELS ──
+  clearEl('svg-labels');
+  const labG = document.getElementById('svg-labels');
+
+  // Bordo d'attacco
+  const {sx: leX, sy: leY} = toSVG(0, 0);
+  makeSVGEl('circle', {cx: leX, cy: leY, r: 3, fill: '#4fc3f7', opacity: '0.7'}, labG);
+
+  // Bordo di fuga
+  const {sx: teX, sy: teY} = toSVG(1, 0);
+  makeSVGEl('circle', {cx: teX, cy: teY, r: 3, fill: '#4fc3f7', opacity: '0.7'}, labG);
+
+  // Punto spessore massimo
+  const xMaxT_idx = xs.reduce((best, x, i) =>
+    naca_yt(x, t) > naca_yt(xs[best], t) ? i : best, 0);
+  const xMaxT = xs[xMaxT_idx];
+  const ytMax = naca_yt(xMaxT, t);
+  const ycMaxT = naca_yc(xMaxT, m, p);
+  const {sx: tmX, sy: tmY_u} = toSVG(xMaxT, ycMaxT + ytMax);
+  const {sx: tmX2, sy: tmY_l} = toSVG(xMaxT, ycMaxT - ytMax);
+  if (state.showGrid) {
+    makeSVGEl('line', {
+      x1: tmX, y1: tmY_u, x2: tmX2, y2: tmY_l,
+      stroke: '#a8ff78', 'stroke-width': '0.8', 'stroke-dasharray': '3 3', opacity: '0.5'
+    }, labG);
+  }
+
+  // Info box
+  const t_max_pct = (ytMax * 100).toFixed(2);
+  const x_t_pct   = (xMaxT * 100).toFixed(1);
+  const x_c_pct   = m > 0 ? ((p / 10) * 100).toFixed(0) : '—';
+  const yc_max    = m > 0 ? (naca_yc(p/10, m, p) * 100).toFixed(3) : '0.000';
+
+  document.getElementById('canvas-info').innerHTML = `
+    <span>Spessore max</span>  ${t_max_pct}% @ x = ${x_t_pct}%<br>
+    <span>Camber max</span>     ${yc_max}% @ x = ${x_c_pct}%<br>
+    <span>LE radius</span>      ≈ ${(1.1019 * (t/100)**2 * 100).toFixed(3)}% c
+  `;
+
+  // ── AGGIORNA DISPLAY NACA ──
+  const tt = t < 10 ? '0' + t : '' + t;
+  document.getElementById('naca-display').textContent = `NACA ${m}${p}${tt}`;
+
+  // ── AGGIORNA TABELLA ──
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABELLA 21 PUNTI
+// ═══════════════════════════════════════════════════════════
+
+function renderTable() {
+  const {m, p, t} = state;
+  const xs = linspace(0, 1, N_TABLE);
+  const body = document.getElementById('table-body');
+  while (body.firstChild) body.removeChild(body.firstChild);
+
+  xs.forEach((x, i) => {
+    const s = naca_surfaces(x, m, p, t);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="x-col">${String(i).padStart(2,'0')}</td>
+      <td class="x-col">${x.toFixed(4)}</td>
+      <td class="sup-col">${s.y_u >= 0 ? ' ' : ''}${s.y_u.toFixed(6)}</td>
+      <td class="inf-col">${s.y_l >= 0 ? ' ' : ''}${s.y_l.toFixed(6)}</td>
+      <td class="cam-col">${s.yc.toFixed(6)}</td>
+      <td style="color:var(--muted)">${s.yt.toFixed(6)}</td>
+    `;
+    body.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EVENTI SLIDER
+// ═══════════════════════════════════════════════════════════
+
+function bindSlider(id, valId, key) {
+  const sl = document.getElementById(id);
+  const vl = document.getElementById(valId);
+  sl.addEventListener('input', () => {
+    state[key] = parseInt(sl.value);
+    vl.textContent = sl.value;
+    render();
+  });
+}
+bindSlider('sl-m', 'val-m', 'm');
+bindSlider('sl-p', 'val-p', 'p');
+bindSlider('sl-t', 'val-t', 't');
+
+function bindToggle(id, key) {
+  document.getElementById(id).addEventListener('change', e => {
+    state[key] = e.target.checked;
+    render();
+  });
+}
+bindToggle('chk-sup',  'showSup');
+bindToggle('chk-inf',  'showInf');
+bindToggle('chk-cam',  'showCam');
+bindToggle('chk-grid', 'showGrid');
+bindToggle('chk-fill', 'showFill');
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT SVG
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById('btn-svg').addEventListener('click', () => {
+  const svg = document.getElementById('airfoil-svg');
+  const serializer = new XMLSerializer();
+  const src = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(svg);
+  const blob = new Blob([src], {type: 'image/svg+xml'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const {m, p, t} = state;
+  const tt = t < 10 ? '0' + t : '' + t;
+  a.href = url; a.download = `NACA_${m}${p}${tt}.svg`;
+  a.click(); URL.revokeObjectURL(url);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT CSV  (100 punti, cosine spacing)
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById('btn-csv').addEventListener('click', () => {
+  const {m, p, t} = state;
+  const xs = cosine_x(101);
+  let csv = 'i,x,y_sup,y_inf,y_camber,y_thickness\n';
+  xs.forEach((x, i) => {
+    const s = naca_surfaces(x, m, p, t);
+    csv += `${i},${x.toFixed(6)},${s.y_u.toFixed(6)},${s.y_l.toFixed(6)},${s.yc.toFixed(6)},${s.yt.toFixed(6)}\n`;
+  });
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const tt = t < 10 ? '0' + t : '' + t;
+  a.href = url; a.download = `NACA_${m}${p}${tt}_100pt.csv`;
+  a.click(); URL.revokeObjectURL(url);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  COPIA TABELLA
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById('btn-copy').addEventListener('click', () => {
+  const {m, p, t} = state;
+  const xs = linspace(0, 1, N_TABLE);
+  let txt = `NACA ${m}${p}${t < 10 ? '0'+t : t} — 21 punti\n`;
+  txt += 'i\tx\ty_sup\ty_inf\ty_camber\ty_thickness\n';
+  xs.forEach((x, i) => {
+    const s = naca_surfaces(x, m, p, t);
+    txt += `${i}\t${x.toFixed(4)}\t${s.y_u.toFixed(6)}\t${s.y_l.toFixed(6)}\t${s.yc.toFixed(6)}\t${s.yt.toFixed(6)}\n`;
+  });
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiato!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+
+render();
+</script>
+</body>
+</html>
